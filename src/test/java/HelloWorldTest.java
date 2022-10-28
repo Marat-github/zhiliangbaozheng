@@ -47,6 +47,6 @@ public class HelloWorldTest {
             System.out.println("Status is: \"Job is ready\"");
         }
         System.out.println("====================================================");
-        response.prettyPrint();
+        //response.prettyPrint();
     }
 }
