@@ -1,52 +1,71 @@
 import io.restassured.RestAssured;
+import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import org.apache.commons.math3.optimization.direct.CMAESOptimizer;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+
+
 public class HelloWorldTest {
-
     @Test
-    public void testHelloWorld() throws InterruptedException {
+    public void testHelloWorld() throws IOException {
 
-        JsonPath response = RestAssured
-                .get("https://playground.learnqa.ru/ajax/api/longtime_job")
-                .jsonPath();
+        String file = "C:/Users/marat/Downloads/passlist (2).xlsx";
+        String status;
 
-        String token = response.get("token");
-        int time = response.get("seconds");
+        String pass = null;
+        XSSFWorkbook wb = new XSSFWorkbook(new FileInputStream(file));
 
-        //System.out.println(time);
-        System.out.println("====================================================");
-        //System.out.println(token);
-        //response.prettyPrint();
+        for (int i = 0; i <= 24; i++) {
+            for (int j = 0; j <= 8; j++) {
 
-        response = RestAssured
-                .given()
-                .queryParam("token", token)
-                .get("https://playground.learnqa.ru/ajax/api/longtime_job")
-                .jsonPath();
+                pass = wb.getSheetAt(0).getRow(i).getCell(j).getStringCellValue();
 
-        String status = response.get("status");
+                Map<String, String> data = new HashMap<>();
+                data.put("login", "super_admin");
+                data.put("password", pass);
 
-        if(status.equals("Job is NOT ready")){
-            System.out.println("Status is: \"Job is NOT ready\"");
+                Response response = RestAssured
+                        .given()
+                        .body(data)
+                        .when()
+                        .post("https://playground.learnqa.ru/ajax/api/get_secret_password_homework")
+                        .andReturn();
+
+                String responseCookie = response.getCookie("auth_cookie");
+                //System.out.println(responseCookie);
+
+                Map<String, String> cookies = new HashMap<>();
+                cookies.put("auth_cookie", responseCookie);
+
+                Response responseForCheck = RestAssured
+                        .given()
+                        .body(data)
+                        .cookies(cookies)
+                        .when()
+                        .post("https://playground.learnqa.ru/ajax/api/check_auth_cookie")
+                        .andReturn();
+
+
+                status = responseForCheck.asString();
+
+                if(status.equals("You are authorized"))  {
+                    System.out.println(pass);
+                    return;
+                }
+            }
         }
-
-        System.out.println("====================================================");
-
-        Thread.sleep(time*1000);
-        response = RestAssured
-                .given()
-                .queryParam("token", token)
-                .get("https://playground.learnqa.ru/ajax/api/longtime_job")
-                .jsonPath();
-
-        status = response.get("status");
-
-        if(status.equals("Job is ready")){
-            System.out.println("Status is: \"Job is ready\"");
-        }
-        System.out.println("====================================================");
-        //response.prettyPrint();
     }
 }
