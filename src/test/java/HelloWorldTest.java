@@ -3,28 +3,23 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class HelloWorldTest {
     @Test
-    public void testLengthFail() {
-        JsonPath response = RestAssured
-                .get("https://playground.learnqa.ru/api/hello")
-                .jsonPath();
+    public void testCookie() {
+        Response response = RestAssured
+                .get("https://playground.learnqa.ru/api/homework_cookie")
+                .andReturn();
 
-        String str = response.getString("answer");
-        assertTrue(str.length() > 15, "Unexpected status code!!!");
-    }
+        Map<String, String> cookies = response.getCookies();
+        System.out.println(cookies);
 
-    @Test
-    public void testLengthPass() {
-        JsonPath response = RestAssured
-                .get("https://playground.learnqa.ru/api/hello")
-                .jsonPath();
+        assertEquals("hw_value", response.getCookie("HomeWork"), "Unexpected cookie");
 
-        String str = response.getString("answer");
-        assertTrue(str.length() < 15, "Unexpected status code!!!");
     }
 }
